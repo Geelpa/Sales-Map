@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard Geoespacial - Agrupamento e Filtro por Ano</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
+    />
+
+    <style>
+      .custom-cluster-icon {
+        background: transparent;
+        border: none;
+      }
+
+      /* Estilização do Tooltip Nativo do Agrupamento */
+      .leaflet-tooltip.cluster-custom-tooltip {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        box-shadow:
+          0 20px 25px -5px rgba(0, 0, 0, 0.1),
+          0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        padding: 0.25rem;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 font-sans text-gray-800 flex flex-col h-screen">
+    <header
+      class="bg-white border-b px-6 py-4 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4 z-10 relative"
+    >
+      <div class="flex items-center gap-3">
+        <!-- Filtro Dinâmico de Ano -->
+        <select
+          id="yearFilter"
+          disabled
+          class="bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-lg p-2.5 disabled:opacity-50"
+        >
+          <option value="todos">Todos os Anos</option>
+        </select>
+
+        <!-- NOVO: Filtro de Status -->
+        <select
+          id="statusFilter"
+          disabled
+          class="bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-lg p-2.5 disabled:opacity-50"
+        >
+          <option value="todos">Todos os Status</option>
+          <option value="ativo">Ativos</option>
+          <option value="inativo">Inativos</option>
+          <option value="outro">Outros</option>
+        </select>
+
+        <button
+          id="btnResetView"
+          class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium px-3 py-2.5 rounded-lg transition"
+        >
+          Redefinir Visão
+        </button>
+
+        <label
+          class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2.5 rounded-lg cursor-pointer transition"
+        >
+          Upload CSV
+          <input type="file" id="csvFileInput" accept=".csv" class="hidden" />
+        </label>
+      </div>
+    </header>
+
+    <main class="flex-1 relative z-0">
+      <div id="map" class="w-full h-full"></div>
+    </main>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+    <script src="./js/data.js"></script>
+    <script src="./js/map.js"></script>
+    <script src="./js/app.js"></script>
+  </body>
+</html>
