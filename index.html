@@ -51,13 +51,52 @@
         <select
           id="statusFilter"
           disabled
-          class="bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-lg p-2.5 disabled:opacity-50"
+"          value="Ativos"
+"          class="bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-lg p-2.5 disabled:opacity-50"
         >
-          <option value="todos">Todos os Status</option>
+          <option value="todos">Todos status</option>
           <option value="ativo">Ativos</option>
           <option value="inativo">Inativos</option>
           <option value="outro">Outros</option>
         </select>
+
+        <div
+          class="flex items-center gap-4 bg-white p-2 rounded-lg shadow-sm border border-gray-200 text-xs"
+        >
+          <!-- Controle de Raio -->
+          <div class="flex items-center gap-1.5">
+            <label for="radiusRange" class="font-semibold text-gray-700"
+              >Raio:</label
+            >
+            <input
+              type="range"
+              id="radiusRange"
+              min="10"
+              max="100"
+              step="10"
+              value="40"
+              class="w-20 acent-yellow-600"
+            />
+            <span id="radiusVal" class="font-bold text-indigo-600 w-6">40</span>
+          </div>
+
+          <!-- Controle de Zoom de Quebra -->
+          <div class="flex items-center gap-1.5">
+            <label for="zoomRange" class="font-semibold text-gray-700"
+              >Zoom Limite:</label
+            >
+            <input
+              type="range"
+              id="zoomRange"
+              min="10"
+              max="22"
+              step="1"
+              value="22"
+              class="w-20 accent-indigo-600"
+            />
+            <span id="zoomVal" class="font-bold text-indigo-600 w-6">22</span>
+          </div>
+        </div>
 
         <button
           id="btnResetView"
@@ -74,7 +113,43 @@
         </label>
       </div>
     </header>
+    <!-- Modal de Clientes do Cluster -->
+    <div
+      id="clusterModal"
+      class="fixed inset-0 bg-slate-900 bg-opacity-60 hidden z-[9999] flex items-center justify-center backdrop-blur-sm transition-opacity"
+    >
+      <div
+        class="bg-white rounded-xl shadow-2xl w-11/12 max-w-4xl max-h-[85vh] flex flex-col overflow-hidden"
+      >
+        <!-- Cabeçalho do Modal -->
+        <div
+          class="px-5 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center"
+        >
+          <h2 class="text-lg font-extrabold text-slate-800">
+            Detalhes do Agrupamento
+            <span
+              class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-sm ml-2"
+              id="modalClusterCount"
+              >0</span
+            >
+          </h2>
+          <button
+            id="closeModalBtn"
+            class="text-gray-400 hover:text-rose-500 transition-colors text-2xl font-bold leading-none"
+          >
+            &times;
+          </button>
+        </div>
 
+        <!-- Conteúdo (Listas de Clientes) -->
+        <div
+          class="p-5 overflow-y-auto bg-white flex-1"
+          id="modalClusterContent"
+        >
+          <!-- As tabelas serão injetadas aqui via JavaScript -->
+        </div>
+      </div>
+    </div>
     <main class="flex-1 relative z-0">
       <div id="map" class="w-full h-full"></div>
     </main>
