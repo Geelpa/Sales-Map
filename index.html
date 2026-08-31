@@ -1,165 +1,295 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard Geoespacial - Agrupamento e Filtro por Ano</title>
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    />
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
-    />
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inteligência Geoespacial</title>
 
-    <style>
-      .custom-cluster-icon {
-        background: transparent;
-        border: none;
-      }
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
 
-      /* Estilização do Tooltip Nativo do Agrupamento */
-      .leaflet-tooltip.cluster-custom-tooltip {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 0.75rem;
-        box-shadow:
-          0 20px 25px -5px rgba(0, 0, 0, 0.1),
-          0 8px 10px -6px rgba(0, 0, 0, 0.1);
-        padding: 0.25rem;
-      }
-    </style>
-  </head>
-  <body class="bg-gray-100 font-sans text-gray-800 flex flex-col h-screen">
-    <header
-      class="bg-white border-b px-6 py-4 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4 z-10 relative"
-    >
-      <div class="flex items-center gap-3">
-        <!-- Filtro Dinâmico de Ano -->
-        <select
-          id="yearFilter"
-          disabled
-          class="bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-lg p-2.5 disabled:opacity-50"
-        >
-          <option value="todos">Todos os Anos</option>
-        </select>
+  <!-- CSS do Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
 
-        <!-- NOVO: Filtro de Status -->
-        <select
-          id="statusFilter"
-          disabled
-"          value="Ativos"
-"          class="bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-lg p-2.5 disabled:opacity-50"
-        >
-          <option value="todos">Todos status</option>
-          <option value="ativo">Ativos</option>
-          <option value="inativo">Inativos</option>
-          <option value="outro">Outros</option>
-        </select>
+  <style>
+    #map {
+      height: calc(100vh - 53px);
+      width: 100%;
+    }
+  </style>
+</head>
 
-        <div
-          class="flex items-center gap-4 bg-white p-2 rounded-lg shadow-sm border border-gray-200 text-xs"
-        >
-          <!-- Controle de Raio -->
-          <div class="flex items-center gap-1.5">
-            <label for="radiusRange" class="font-semibold text-gray-700"
-              >Raio:</label
-            >
-            <input
-              type="range"
-              id="radiusRange"
-              min="10"
-              max="100"
-              step="10"
-              value="40"
-              class="w-20 acent-yellow-600"
-            />
-            <span id="radiusVal" class="font-bold text-indigo-600 w-6">40</span>
-          </div>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
 
-          <!-- Controle de Zoom de Quebra -->
-          <div class="flex items-center gap-1.5">
-            <label for="zoomRange" class="font-semibold text-gray-700"
-              >Zoom Limite:</label
-            >
-            <input
-              type="range"
-              id="zoomRange"
-              min="10"
-              max="22"
-              step="1"
-              value="22"
-              class="w-20 accent-indigo-600"
-            />
-            <span id="zoomVal" class="font-bold text-indigo-600 w-6">22</span>
-          </div>
-        </div>
+  <!-- CABEÇALHO MINIMALISTA -->
+  <header class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-40">
+    <div class="mx-auto px-4 py-2 flex flex-wrap items-center justify-between gap-3">
+      <!-- Barra Unificada de Filtros e Controles -->
+      <div class="flex flex-wrap items-center gap-2 text-xs">
 
-        <button
-          id="btnResetView"
-          class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium px-3 py-2.5 rounded-lg transition"
-        >
-          Redefinir Visão
-        </button>
-
+        <!-- Upload Discreto -->
         <label
-          class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2.5 rounded-lg cursor-pointer transition"
-        >
-          Upload CSV
-          <input type="file" id="csvFileInput" accept=".csv" class="hidden" />
+          class="bg-yellow-100 hover:bg-yellow-200 text-slate-700 font-semibold p-1.5 rounded-lg border border-yellow-300 cursor-pointer transition-colors flex items-center gap-1">
+          <span>📁 Importar CSV</span>
+          <input type="file" id="fileInput" accept=".csv" class="hidden">
         </label>
-      </div>
-    </header>
-    <!-- Modal de Clientes do Cluster -->
-    <div
-      id="clusterModal"
-      class="fixed inset-0 bg-slate-900 bg-opacity-60 hidden z-[9999] flex items-center justify-center backdrop-blur-sm transition-opacity"
-    >
-      <div
-        class="bg-white rounded-xl shadow-2xl w-11/12 max-w-4xl max-h-[85vh] flex flex-col overflow-hidden"
-      >
-        <!-- Cabeçalho do Modal -->
-        <div
-          class="px-5 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center"
-        >
-          <h2 class="text-lg font-extrabold text-slate-800">
-            Detalhes do Agrupamento
-            <span
-              class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-sm ml-2"
-              id="modalClusterCount"
-              >0</span
-            >
-          </h2>
-          <button
-            id="closeModalBtn"
-            class="text-gray-400 hover:text-rose-500 transition-colors text-2xl font-bold leading-none"
-          >
-            &times;
+
+        <div class="h-4 w-px bg-slate-200 hidden md:block"></div>
+
+        <!-- Modelo de Consulta -->
+        <div class="flex items-center gap-1">
+          <select id="tipoRelatorio"
+            class="bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs font-medium focus:ring-1 focus:ring-blue-500 outline-none">
+            <option value="mvp_contratos">Contratos (MVP)</option>
+
+            <!-- Exemplo de como deve ficar a área do select no seu header -->
+            <div class="flex items-center gap-2">
+              <select id="tipoRelatorio" class="...">
+                <!-- Opções geradas via JS -->
+              </select>
+
+              <!-- Botão para abrir o Gerenciador de Modelos -->
+              <button id="btnGerenciarModelos" title="Gerenciar Modelos Salvos"
+                class="bg-slate-200 hover:bg-slate-300 text-slate-700 p-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-1">
+                ⚙️ Gerenciar
+              </button>
+            </div>
+          </select>
+          <button id="btnNovoModelo"
+            class="bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold px-2 py-1.5 rounded-lg transition-colors border border-blue-200"
+            title="Criar Nova Consulta">
+            +
+          </button>
+          <button id="btnEditarModelo"
+            class="hidden bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold px-2 py-1.5 rounded-lg transition-colors border border-slate-300 text-xs"
+            title="Editar Consulta Selecionada">
+            ✏️
           </button>
         </div>
 
-        <!-- Conteúdo (Listas de Clientes) -->
-        <div
-          class="p-5 overflow-y-auto bg-white flex-1"
-          id="modalClusterContent"
-        >
-          <!-- As tabelas serão injetadas aqui via JavaScript -->
+        <div class="h-4 w-px bg-slate-200 hidden md:block"></div>
+
+        <!-- BARRA DE FILTROS AJUSTADA -->
+        <div class="flex items-center gap-2 flex-wrap">
+
+          <!-- Filtro Dinâmico de Anos -->
+          <select id="yearFilter"
+            class="bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs font-medium outline-none">
+            <option value="todos">Todos Anos</option>
+          </select>
+
+          <!-- Filtro 1: Escolha qual campo do CSV quer consultar -->
+          <select id="campoDinamicoSelect"
+            class="bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs font-medium outline-none">
+            <option value="">Filtrar por campo...</option>
+          </select>
+
+          <!-- Filtro 2: Valor dinâmico do campo escolhido -->
+          <select id="valorDinamicoSelect" disabled
+            class="bg-slate-100 border border-slate-300 rounded-lg px-2 py-1.5 text-xs font-medium outline-none text-slate-400 cursor-not-allowed">
+            <option value="todos">Selecione o campo primeiro</option>
+          </select>
+
         </div>
+
+        <div class="h-4 w-px bg-slate-200 hidden md:block"></div>
+
+        <!-- CONTROLES DO CLUSTER (Com Sliders Range) -->
+        <div class="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1">
+          <!-- Controle de Raio -->
+          <div class="flex items-center gap-1.5" title="Tamanho da área de agrupamento dos pontos">
+            <label for="radiusRange" class="text-[10px] uppercase font-bold text-slate-500">Raio:</label>
+            <input type="range" id="radiusRange" min="10" max="150" step="10" value="80"
+              class="w-16 md:w-20 accent-blue-600 cursor-pointer">
+            <span id="radiusVal" class="text-xs font-bold text-blue-600 w-5 text-right">80</span>
+          </div>
+
+          <div class="h-3 w-px bg-slate-300"></div>
+
+          <!-- Controle de Zoom Off -->
+          <div class="flex items-center gap-1.5" title="Nível de zoom em que o agrupamento é desativado">
+            <label for="zoomRange" class="text-[10px] uppercase font-bold text-slate-500">Zoom Off:</label>
+            <input type="range" id="zoomRange" min="10" max="22" step="1" value="16"
+              class="w-16 md:w-20 accent-blue-600 cursor-pointer">
+            <span id="zoomVal" class="text-xs font-bold text-blue-600 w-5 text-right">16</span>
+          </div>
+        </div>
+
       </div>
     </div>
-    <main class="flex-1 relative z-0">
-      <div id="map" class="w-full h-full"></div>
-    </main>
+  </header>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <!-- MAPA -->
+  <main class="flex-1 relative">
+    <div id="map"></div>
+  </main>
 
-    <script src="./js/data.js"></script>
-    <script src="./js/map.js"></script>
-    <script src="./js/app.js"></script>
-  </body>
+  <!-- MODAL DE RESUMO DO CLUSTER -->
+  <div id="modalClusterInfo"
+    class="fixed inset-0 bg-slate-900/60 hidden z-[9999] flex items-center justify-center backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[85vh] overflow-hidden">
+      <div class="flex justify-between items-center px-6 py-4 border-b border-slate-100 bg-slate-50">
+        <div>
+          <h3 class="font-extrabold text-base text-slate-800">Resumo da Região Agrupada</h3>
+          <p id="clusterSubtitulo" class="text-xs text-slate-500">Listagem dos itens contidos nesta área</p>
+        </div>
+        <button id="fecharClusterModal"
+          class="text-slate-400 hover:text-rose-500 font-bold text-xl transition-colors">&times;</button>
+      </div>
+
+      <div id="clusterListaItens" class="px-6 py-4 overflow-y-auto flex-1 flex flex-col gap-2"></div>
+
+      <div class="px-6 py-3 border-t border-slate-100 bg-slate-50 flex justify-end">
+        <button id="btnFecharClusterModal"
+          class="px-4 py-1.5 text-xs font-bold bg-slate-200 text-slate-700 hover:bg-slate-300 rounded-lg">
+          Fechar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CONSTRUTOR DE MODELOS DE CONSULTA -->
+  <div id="modalSchemaBuilder"
+    class="fixed inset-0 bg-slate-900/60 hidden z-[9999] flex items-center justify-center backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl flex flex-col max-h-[90vh] overflow-hidden">
+
+      <!-- Cabeçalho do Modal -->
+      <div class="flex justify-between items-center px-6 py-4 border-b border-slate-100 bg-slate-50">
+        <h3 id="tituloModalSchema" class="font-extrabold text-base text-slate-800">Configurar Nova Consulta</h3>
+        <button onclick="document.getElementById('modalSchemaBuilder').classList.add('hidden')"
+          class="text-slate-400 hover:text-rose-500 font-bold text-xl transition-colors">&times;</button>
+      </div>
+
+      <!-- Corpo do Modal -->
+      <div class="px-6 py-4 overflow-y-auto flex-1 flex flex-col gap-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Nome da Consulta /
+            Modelo</label>
+          <input type="text" id="inputNomeModelo" placeholder="Ex: Análise de Vendas, Prospecção..."
+            class="w-full text-xs border border-slate-300 rounded-lg p-2 focus:ring-1 focus:ring-blue-500 outline-none">
+        </div>
+
+        <div class="border-t border-slate-100 pt-3">
+          <p class="text-xs text-slate-500 mb-3 bg-blue-50 p-2.5 rounded-lg border border-blue-100 leading-relaxed">
+            Selecione quais colunas do arquivo você deseja usar para <b>filtrar</b> e quais deverão aparecer no <b>balão
+              de informações (popup)</b> no mapa.
+          </p>
+
+          <div
+            class="grid grid-cols-12 gap-2 text-[10px] font-bold text-slate-400 uppercase mb-2 px-2 text-center border-b border-slate-200 pb-2">
+            <span class="col-span-6 text-left">Coluna do CSV</span>
+            <span class="col-span-3">Filtro</span>
+            <span class="col-span-3">No Mapa</span>
+          </div>
+
+          <!-- Container onde os campos do CSV são gerados dinamicamente -->
+          <div id="mapeamentoCamposContainer" class="flex flex-col max-h-56 overflow-y-auto">
+            <p class="text-xs text-slate-400 italic p-2 text-center">Importe um arquivo CSV para visualizar as colunas.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rodapé com Botões -->
+      <div class="px-6 py-3 border-t border-slate-100 bg-slate-50 flex justify-end gap-2 items-center">
+        <button onclick="document.getElementById('modalSchemaBuilder').classList.add('hidden')"
+          class="px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-200 rounded-lg transition-colors">
+          Cancelar
+        </button>
+        <button id="salvarNovoModelo"
+          class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-1.5 rounded-lg shadow-sm transition-colors">
+          Salvar e Executar
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TOAST DE FEEDBACK DE IMPORTAÇÃO -->
+  <div id="toastFeedback"
+    class="fixed bottom-6 right-6 bg-white border-l-4 border-blue-600 shadow-2xl rounded-r-xl p-4 z-[9999] transform transition-all duration-300 translate-y-10 opacity-0 pointer-events-none flex flex-col gap-2 min-w-[280px]">
+    <div class="flex justify-between items-start mb-1">
+      <h4 class="text-sm font-extrabold text-slate-800">Resumo da Importação</h4>
+      <button onclick="fecharToast()" class="text-slate-400 hover:text-slate-700 text-lg leading-none">&times;</button>
+    </div>
+    <div class="text-xs font-medium text-slate-600 flex flex-col gap-1.5">
+      <div class="flex justify-between border-b border-slate-100 pb-1">
+        <span>Linhas processadas:</span>
+        <span id="toastTotal" class="font-bold text-slate-800">0</span>
+      </div>
+      <div class="flex justify-between border-b border-slate-100 pb-1">
+        <span>Itens no mapa:</span>
+        <span id="toastSucesso" class="font-bold text-emerald-600">0</span>
+      </div>
+      <div class="flex justify-between items-center">
+        <span>Ignorados (Sem Lat/Lng):</span>
+        <span id="toastErro" class="font-bold text-rose-500">0</span>
+      </div>
+      <button id="btnVerErros" onclick="abrirModalErros()"
+        class="hidden mt-1 text-blue-600 hover:text-blue-800 font-bold underline text-left transition-colors">
+        Ver detalhes dos itens ignorados
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL DE ITENS IGNORADOS (ERROS) -->
+  <div id="modalErrosImportacao"
+    class="fixed inset-0 bg-slate-900/60 hidden z-[9999] flex items-center justify-center backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col max-h-[85vh] overflow-hidden">
+      <div class="flex justify-between items-center px-6 py-4 border-b border-slate-100 bg-rose-50">
+        <div>
+          <h3 class="font-extrabold text-base text-rose-800 flex items-center gap-2">
+            ⚠️ Itens Ignorados na Importação
+          </h3>
+          <p class="text-xs text-rose-600/80 font-medium">Estes registros vieram no CSV, mas faltam informações cruciais
+            para exibi-los no mapa.</p>
+        </div>
+        <button onclick="fecharModalErros()"
+          class="text-rose-400 hover:text-rose-700 font-bold text-xl transition-colors">&times;</button>
+      </div>
+
+      <div id="listaErrosContainer" class="px-6 py-4 overflow-y-auto flex-1 flex flex-col gap-3 bg-slate-50"></div>
+
+      <div class="px-6 py-3 border-t border-slate-100 bg-white flex justify-end">
+        <button onclick="fecharModalErros()"
+          class="px-4 py-1.5 text-xs font-bold bg-slate-200 text-slate-700 hover:bg-slate-300 rounded-lg">
+          Fechar
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- MODAL GERENCIAR MODELOS -->
+  <div id="modalGerenciar"
+    class="fixed inset-0 bg-slate-900/60 hidden z-[9999] flex items-center justify-center backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden">
+      <div class="flex justify-between items-center px-6 py-4 border-b border-slate-100 bg-slate-50">
+        <h3 class="font-extrabold text-base text-slate-800">Gerenciar Consultas Salvas</h3>
+        <button onclick="document.getElementById('modalGerenciar').classList.add('hidden')"
+          class="text-slate-400 hover:text-rose-500 font-bold text-xl transition-colors">&times;</button>
+      </div>
+      <div class="px-6 py-4 max-h-60 overflow-y-auto flex flex-col gap-2" id="listaModelosContainer">
+        <!-- Listado dinamicamente -->
+      </div>
+      <div class="px-6 py-3 border-t border-slate-100 bg-slate-50 flex justify-end">
+        <button onclick="document.getElementById('modalGerenciar').classList.add('hidden')"
+          class="px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-200 rounded-lg transition-colors">
+          Fechar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+  <!-- SCRIPTS DA APLICAÇÃO -->
+  <script src="js/map.js"></script>
+  <script src="js/filters.js"></script>
+  <script src="js/app.js"></script>
+</body>
+
 </html>
